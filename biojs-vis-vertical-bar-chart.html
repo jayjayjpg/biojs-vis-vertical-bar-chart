@@ -17,13 +17,19 @@ visualize data in a horizontal bar chart
         --bar-color: grey;
       }
 
-      :host > ::content .bar {
+      :host > ::content .column {
         display: inline-block;
-        background-color: var(--bar-color);
         margin-right: 5px;
         position: absolute;
         bottom: 0;
         cursor: pointer;
+      }
+
+      ::content .bar {
+        background-color: var(--bar-color);
+        position: absolute;
+        bottom: 0;
+        left: 0;
       }
 
       .row:after, .row:before {
@@ -31,13 +37,7 @@ visualize data in a horizontal bar chart
         clear: both;
         display: block;
       }
-      .control-right {
-        float: right;
-      }
 
-      .control-left {
-        float: left;
-      }
 
       ::content .tooltip {
         opacity: 0;
@@ -61,8 +61,11 @@ visualize data in a horizontal bar chart
         z-index: 999;
       }
 
-      ::content .bar:focus {
+      ::content .column:focus, ::content .tooltip:focus {
         outline: none;
+      }
+
+      ::content .column:focus .bar {
         opacity: .8;
       }
     </style>
@@ -145,11 +148,14 @@ visualize data in a horizontal bar chart
         var totalHeight = this.pixelPropToNum(this.height);
         
         var selection = d3.select(this)
-                     .selectAll(".bar")
+                     .selectAll(".column")
                      .data(self.data);
         var selectionP = d3.select(this)
-                        .selectAll(".bar aside")
+                        .selectAll(".column aside")
                         .data(self.data);
+        var selectionB = d3.select(this)
+                           .selectAll(".bar")
+                           .data(self.data);
 
          d3.select(this)
               .attr("style", function(){
@@ -157,20 +163,28 @@ visualize data in a horizontal bar chart
               });
 
         // ENTER section
-         selection
+         var cols = selection
               .enter()
               .append("div")
+              .attr("class","column")
               .attr("tabindex", function(d, i){
                 return i * 2;
+              })
+              .attr("style", function(d, i) {
+                  return  "left: " + parseInt((i *  totalWidth / self.dataLength) + i * 4) + "px; height: " + totalHeight + "px; width:" + totalWidth / self.dataLength + "px;";
               })
               .on("mouseover", self.showToolTip)
               .on("mouseout", self.hideToolTip)
               .on("click", self.focusToolTip)
-              .on("blur", self.blurToolTip)
+              .on("blur", self.blurToolTip);
+           
+          cols
+              .append("div")
               .attr("class","bar")
               .attr("style", function(d, i) {
-                  return "width:" + totalWidth / self.dataLength + "px; height: " + totalHeight * d / self.dataMax + "px; left: " + parseInt((i *  totalWidth / self.dataLength) + i * 2) + "px;"
-              })
+                  return "width:" + totalWidth / self.dataLength + "px; height: " + totalHeight * d / self.dataMax +"px;"
+              });
+            cols
               .append("aside")
               .attr("class","tooltip")
               .attr("tabindex", function(d, i){
@@ -179,19 +193,24 @@ visualize data in a horizontal bar chart
              .text(function(d){
                 return d + " units";
               }); // where to put the transition??? 
+         // UPDATE section
+         selection
+              .attr("style", function(d, i) {
+                  return  "left: " + parseInt((i *  totalWidth / self.dataLength) + i * 4) + "px; height: " + totalHeight + "px; width:" + totalWidth / self.dataLength + "px;";
+              });
 
          selectionP
             .text(function(d){
                 return d + " units";
             });
 
-         // UPDATE section
-         selection
+
+         selectionB
             .transition()
             .duration(1400)
             .ease(d3.easePolyOut)
-            .attr("style", function(d) {
-              return "width:" + totalWidth / self.dataLength + "px; height: " + totalHeight * d / self.dataMax + "px; left: " + parseInt((i *  totalWidth / self.dataLength) + i * 2) + "px;"
+            .attr("style", function(d, i) {
+              return "height: " + totalHeight * d / self.dataMax + "px; width: 100%;";
             });
 
 
