@@ -23,6 +23,7 @@ visualize data in a horizontal bar chart
         margin-right: 5px;
         position: absolute;
         bottom: 0;
+        cursor: pointer;
       }
 
       .row:after, .row:before {
@@ -40,6 +41,13 @@ visualize data in a horizontal bar chart
 
       ::content .tooltip {
         opacity: 0;
+        padding: 8px 4px;
+        position: absolute;
+        right: -30px;
+        top: 15px;
+        border-radius: 4px;
+        background-color: var(--tooltip-color);
+        color: var(--tooltip-text-color);
         -webkit-transition: opacity .2s ease-in;
         -moz-transition: opacity .2s ease-in;
         -o-transition: opacity .2s ease-in;
@@ -47,16 +55,17 @@ visualize data in a horizontal bar chart
         transition: opacity .2s ease-in;
       }
 
-      ::content .tooltip.active {
+      ::content .tooltip.active, 
+      ::content .tooltip.focus {
         opacity: 1;
+        z-index: 999;
+      }
+
+      ::content .bar:focus {
+        outline: none;
+        opacity: .8;
       }
     </style>
-    <header class="row">
-      <a class="control-left" href="#"><iron-icon icon="arrow-back"></iron-icon></a>
-      <a class="control-right" href="#"><iron-icon icon="arrow-forward"></iron-icon></a>
-    </header>
-    <p>Exploring [[prop2]] dataset...</p>
-    <p><input type="text" value="{{prop2::keyup}}"></p>
   </template>
 
   <script>
@@ -80,6 +89,16 @@ visualize data in a horizontal bar chart
         color: {
           type: String,
           value: '#dd77dd',
+          observer: 'changeTheme'
+        },
+        tooltipColor: {
+          type: String,
+          value: '#444',
+          observer: 'changeTheme'
+        },
+        tooltipTextColor: {
+          type: String,
+          value: '#fff',
           observer: 'changeTheme'
         },
         data: {
@@ -114,6 +133,8 @@ visualize data in a horizontal bar chart
           updatedColor = color;
          }
          this.customStyle['--bar-color'] = updatedColor;
+         this.customStyle['--tooltip-color'] = this.tooltipColor;
+         this.customStyle['--tooltip-text-color'] = this.tooltipTextColor;
          this.updateStyles();
       },
       
@@ -139,14 +160,22 @@ visualize data in a horizontal bar chart
          selection
               .enter()
               .append("div")
+              .attr("tabindex", function(d, i){
+                return i * 2;
+              })
               .on("mouseover", self.showToolTip)
               .on("mouseout", self.hideToolTip)
+              .on("click", self.focusToolTip)
+              .on("blur", self.blurToolTip)
               .attr("class","bar")
-              .attr("style", function(d) {
-                  return "width:" + totalWidth / self.dataLength + "px; height: " + totalHeight * d / self.dataMax + "px;"
+              .attr("style", function(d, i) {
+                  return "width:" + totalWidth / self.dataLength + "px; height: " + totalHeight * d / self.dataMax + "px; left: " + parseInt((i *  totalWidth / self.dataLength) + i * 2) + "px;"
               })
               .append("aside")
               .attr("class","tooltip")
+              .attr("tabindex", function(d, i){
+                return i * 2 + 1;
+              })
              .text(function(d){
                 return d + " units";
               }); // where to put the transition??? 
@@ -162,7 +191,7 @@ visualize data in a horizontal bar chart
             .duration(1400)
             .ease(d3.easePolyOut)
             .attr("style", function(d) {
-              return "width:" + totalWidth / self.dataLength + "px; height: " + totalHeight * d / self.dataMax + "px;"
+              return "width:" + totalWidth / self.dataLength + "px; height: " + totalHeight * d / self.dataMax + "px; left: " + parseInt((i *  totalWidth / self.dataLength) + i * 2) + "px;"
             });
 
 
@@ -195,6 +224,22 @@ visualize data in a horizontal bar chart
         d3.select(this)
           .select(".tooltip")
           .classed("active", false);
+      },
+
+      focusToolTip(d, i){
+        var tt = d3.select(this)
+                .select(".tooltip");
+        var ttIsFocused = tt
+                            .classed("focus");
+           tt
+            .classed("focus", !ttIsFocused);
+          
+      },
+
+      blurToolTip(d, i){
+        var tt = d3.select(this)
+                  .select(".tooltip");
+        tt.classed("focus", false);
       },
 
       attached: function(){
