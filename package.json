@@ -1,0 +1,22 @@
+{
+  "name": "biojs-vis-vertical-bar-chart",
+  "version": "1.0.0",
+  "description": "BioJS webcomponent for vertical bar charts",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "bower install"
+  },
+  "keywords": [
+    "biojs",
+    "webcomponent",
+    "bar-chart",
+    "horizontal",
+    "d3",
+    "chart",
+    "bar",
+    "visualisation"
+  ],
+  "author": "Jessica Jordan",
+  "license": "MIT"
+}

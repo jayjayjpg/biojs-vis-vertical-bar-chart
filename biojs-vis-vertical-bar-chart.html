@@ -1,0 +1,208 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/iron-icons/iron-icons.html">
+
+<!--
+`biojs-vis-vertical-bar-chart`
+visualize data in a horizontal bar chart
+
+@demo demo/index.html 
+-->
+
+<dom-module id="biojs-vis-vertical-bar-chart">
+  <template>
+    <style>
+      :host {
+        display: block;
+        position: relative;
+        --bar-color: grey;
+      }
+
+      :host > ::content .bar {
+        display: inline-block;
+        background-color: var(--bar-color);
+        margin-right: 5px;
+        position: absolute;
+        bottom: 0;
+      }
+
+      .row:after, .row:before {
+        content: "";
+        clear: both;
+        display: block;
+      }
+      .control-right {
+        float: right;
+      }
+
+      .control-left {
+        float: left;
+      }
+
+      ::content .tooltip {
+        opacity: 0;
+        -webkit-transition: opacity .2s ease-in;
+        -moz-transition: opacity .2s ease-in;
+        -o-transition: opacity .2s ease-in;
+        -ms-transition: opacity .2s ease-in;
+        transition: opacity .2s ease-in;
+      }
+
+      ::content .tooltip.active {
+        opacity: 1;
+      }
+    </style>
+    <header class="row">
+      <a class="control-left" href="#"><iron-icon icon="arrow-back"></iron-icon></a>
+      <a class="control-right" href="#"><iron-icon icon="arrow-forward"></iron-icon></a>
+    </header>
+    <p>Exploring [[prop2]] dataset...</p>
+    <p><input type="text" value="{{prop2::keyup}}"></p>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'biojs-vis-vertical-bar-chart',
+
+      ready: function(){
+
+      },
+
+      properties: {
+        width: {
+          type: String,
+          value: '200px',
+        },
+        height: {
+          type: String,
+          value: '100px'
+        },
+        color: {
+          type: String,
+          value: '#dd77dd',
+          observer: 'changeTheme'
+        },
+        data: {
+          type: Array,
+          observer: 'renderChart'
+        },
+        dataLength: {
+          type: Number,
+          computed: 'computeDataLength(data)'
+        },
+        dataMax: {
+          type: Number,
+          computed: 'computeMaxDataPoint(data)'
+        }
+      },
+
+      computeDataLength(data){
+        return data.length;
+      },
+
+      computeMaxDataPoint(data) {
+        console.log("d3.max data: " + d3.max(data));
+        return d3.max(data);
+      },
+
+      changeTheme: function(color){
+         var updatedColor = '';
+         if (color == undefined){
+          updatedColor = this.color;
+         }
+         else {
+          updatedColor = color;
+         }
+         this.customStyle['--bar-color'] = updatedColor;
+         this.updateStyles();
+      },
+      
+      renderChart: function(){
+        console.log("called render chart and data: " + this.data);
+        var self = this;
+        var totalWidth = this.pixelPropToNum(this.width);
+        var totalHeight = this.pixelPropToNum(this.height);
+        
+        var selection = d3.select(this)
+                     .selectAll(".bar")
+                     .data(self.data);
+        var selectionP = d3.select(this)
+                        .selectAll(".bar aside")
+                        .data(self.data);
+
+         d3.select(this)
+              .attr("style", function(){
+                return "height: " + totalHeight + "px;";
+              });
+
+        // ENTER section
+         selection
+              .enter()
+              .append("div")
+              .on("mouseover", self.showToolTip)
+              .on("mouseout", self.hideToolTip)
+              .attr("class","bar")
+              .attr("style", function(d) {
+                  return "width:" + totalWidth / self.dataLength + "px; height: " + totalHeight * d / self.dataMax + "px;"
+              })
+              .append("aside")
+              .attr("class","tooltip")
+             .text(function(d){
+                return d + " units";
+              }); // where to put the transition??? 
+
+         selectionP
+            .text(function(d){
+                return d + " units";
+            });
+
+         // UPDATE section
+         selection
+            .transition()
+            .duration(1400)
+            .ease(d3.easePolyOut)
+            .attr("style", function(d) {
+              return "width:" + totalWidth / self.dataLength + "px; height: " + totalHeight * d / self.dataMax + "px;"
+            });
+
+
+        // EXIT section 
+        selection
+            .exit()
+            .remove();
+
+      },
+
+      setData: function(d){
+        console.log("data from data method: " + d);
+        this.setAttribute('data', d);
+      },
+
+      pixelPropToNum(str){
+        // remove pixels from the config value
+        var num = str.trim().slice(0,-2);
+        console.log("pixelPropToNum " + num);
+        return num;
+      },
+
+      showToolTip(d, i){
+        d3.select(this)
+          .select(".tooltip")
+          .classed("active", true);
+      },
+
+      hideToolTip(d, i){
+        d3.select(this)
+          .select(".tooltip")
+          .classed("active", false);
+      },
+
+      attached: function(){
+        this.async(function(){
+          this.renderChart();
+        });
+      }
+
+    });
+  </script>
+</dom-module>

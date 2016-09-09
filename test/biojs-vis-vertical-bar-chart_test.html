@@ -1,0 +1,32 @@
+<!doctype html>
+
+<html>
+  <head>
+    <title>biojs-vis-vertical-bar-chart test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+
+    <link rel="import" href="../biojs-vis-vertical-bar-chart.html">
+  </head>
+  <body>
+
+    <test-fixture id="basic">
+      <template>
+        <biojs-vis-vertical-bar-chart></biojs-vis-vertical-bar-chart>
+      </template>
+    </test-fixture>
+
+    <script>
+      suite('biojs-vis-vertical-bar-chart', function() {
+
+        test('instantiating the element works', function() {
+          var element = fixture('basic');
+          assert.equal(element.is, 'biojs-vis-vertical-bar-chart');
+        });
+
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+  <head>
+    <title>biojs-vis-vertical-bar-chart demo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../d3/d3.min.js" charset="utf-8"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+
+    <link rel="import" href="../biojs-vis-vertical-bar-chart.html">
+
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+  </head>
+  <body>
+    <div class="vertical-section-container centered">
+      <h3>Basic biojs-vis-vertical-bar-chart Demo</h3>
+      <demo-snippet>
+        <template is="dom-bind">
+          <biojs-vis-vertical-bar-chart id="abc" color="#d77dd7" data="[50,40,30,20,10]"></biojs-vis-vertical-bar-chart>
+        </template>
+      </demo-snippet>
+    </div>
+  <script>
+  (function(){
+   
+    document.addEventListener('WebComponentsReady', function(){
+      document.querySelector('#abc').setData("[4,4,4]");
+      var myData = [];
+
+      //var vizDom = document.getElementsByTagName('biojs-vis-vertical-bar-chart');
+      var vizDom = document.getElementById('abc');
+      // vizDom.setAttribute('data', myData);
+      function randomNum(maxNum) {
+         return Math.floor(Math.random() * maxNum);
+       }
+      function createRandomData(num){
+        var resArr = [];
+        var arrlen = randomNum(num);
+        for (var i = 0; i < arrlen + 1; i += 1){
+          resArr.push(randomNum(100));
+        }
+        console.log("resArr: " + resArr);
+        return resArr;
+      }
+      console.log("vizfon" + vizDom);
+      var colorPal = ['pink','green','orange','skyblue','green','black'];
+      window.setInterval(function(){
+        myData = createRandomData(12);
+        //vizDom.setAttribute('data', JSON.stringify(myData));
+        vizDom.setAttribute('color', colorPal[randomNum(5)])
+       }, 3000);
+      console.log("myData: " + myData);
+    });
+    })();
+  </script>
+  </body>
+</html>
