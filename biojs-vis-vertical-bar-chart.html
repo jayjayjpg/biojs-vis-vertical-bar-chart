@@ -19,7 +19,6 @@ visualize data in a horizontal bar chart
 
       :host > ::content .column {
         display: inline-block;
-        margin-right: 5px;
         position: absolute;
         bottom: 0;
         cursor: pointer;
@@ -36,6 +35,11 @@ visualize data in a horizontal bar chart
         content: "";
         clear: both;
         display: block;
+      }
+
+      ::content .field {
+        position: relative;
+        width: 100%;
       }
 
 
@@ -64,9 +68,39 @@ visualize data in a horizontal bar chart
       ::content .column:focus, ::content .tooltip:focus {
         outline: none;
       }
+      
+      ::content .column {
+        text-align: center;
+      }
+
+      ::content .bar {
+        margin: 0 auto;
+      }
 
       ::content .column:focus .bar {
         opacity: .8;
+      }
+
+      ::content .x-axis-wrapper {
+        position: absolute;
+        bottom: -10px;
+      }
+
+      ::content .axis text {
+        font: 10px sans-serif;
+      }
+
+      ::content .x.axis {
+        position: absolute;
+        bottom: -15px;
+        width: 100%;
+      }
+
+      ::content .axis path,
+      ::content .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
       }
     </style>
   </template>
@@ -140,27 +174,62 @@ visualize data in a horizontal bar chart
          this.customStyle['--tooltip-text-color'] = this.tooltipTextColor;
          this.updateStyles();
       },
+
+      initRender(){
+        var totalWidth = this.pixelPropToNum(this.width);
+        var totalHeight = this.pixelPropToNum(this.height);
+        var bufferedHeight = parseInt(totalHeight) + 30;
+ 
+        d3.select(this)
+            .attr("style", "height: " + bufferedHeight + "px; width: " + totalWidth + "px;");
+        var margin = {top: 10, right: 0, bottom: 5, left: 0},
+            width = totalWidth - margin.left - margin.right,
+            height = 30 - margin.top - margin.bottom;
+        var colField = d3.select(this)
+                         .append("div")
+                         .attr("class", "field");
+        var svgContainer = d3.select(this)
+                              .append("svg")
+                              .attr("class", "x-axis-wrapper")
+                              .attr("width", width + margin.left + margin.right)
+                              .attr("height", height + margin.top + margin.bottom);
+        var xScale = d3.scaleBand() // modify from old version of d3: d3.scale.linear
+          .domain(this.data.map(function(d, i) { return i; }))
+          .range([0, totalWidth]);
+
+        var xAxis = d3.axisBottom()
+            .scale(xScale);
+
+        var axes = svgContainer
+          .append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0,0)")
+          .call(xAxis);
+      },
       
       renderChart: function(){
-        console.log("called render chart and data: " + this.data);
+        console.log("d3 scale: " + d3.version);
         var self = this;
         var totalWidth = this.pixelPropToNum(this.width);
         var totalHeight = this.pixelPropToNum(this.height);
-        
-        var selection = d3.select(this)
+        var colWidth = totalWidth / self.dataLength;
+        var barWidth = 95;
+        var colField = d3.select(".field");
+        var selection = colField
                      .selectAll(".column")
                      .data(self.data);
-        var selectionP = d3.select(this)
+        var selectionP = colField
                         .selectAll(".column aside")
                         .data(self.data);
-        var selectionB = d3.select(this)
+        var selectionB = colField
                            .selectAll(".bar")
                            .data(self.data);
 
-         d3.select(this)
+         colField
               .attr("style", function(){
                 return "height: " + totalHeight + "px;";
               });
+
 
         // ENTER section
          var cols = selection
@@ -171,7 +240,7 @@ visualize data in a horizontal bar chart
                 return i * 2;
               })
               .attr("style", function(d, i) {
-                  return  "left: " + parseInt((i *  totalWidth / self.dataLength) + i * 4) + "px; height: " + totalHeight + "px; width:" + totalWidth / self.dataLength + "px;";
+                  return  "left: " + parseInt((i *  totalWidth / self.dataLength)) + "px; height: 100%; width:" + colWidth + "px;";
               })
               .on("mouseover", self.showToolTip)
               .on("mouseout", self.hideToolTip)
@@ -181,8 +250,14 @@ visualize data in a horizontal bar chart
           cols
               .append("div")
               .attr("class","bar")
+              .attr("style", function(d, i){
+                return "width:" + barWidth + "%; height: 0px;";
+              })
+              .transition()
+              .duration(1800)
+              .ease(d3.easePolyOut)
               .attr("style", function(d, i) {
-                  return "width:" + totalWidth / self.dataLength + "px; height: " + totalHeight * d / self.dataMax +"px;"
+                  return "width:" + barWidth + "%; height: " + totalHeight * d / self.dataMax +"px;"
               });
             cols
               .append("aside")
@@ -196,7 +271,7 @@ visualize data in a horizontal bar chart
          // UPDATE section
          selection
               .attr("style", function(d, i) {
-                  return  "left: " + parseInt((i *  totalWidth / self.dataLength) + i * 4) + "px; height: " + totalHeight + "px; width:" + totalWidth / self.dataLength + "px;";
+                  return  "left: " + parseInt((i *  totalWidth / self.dataLength)) + "px; height: 100%; width:" + colWidth + "px;";
               });
 
          selectionP
@@ -204,13 +279,17 @@ visualize data in a horizontal bar chart
                 return d + " units";
             });
 
+         selectionB
+          .attr("style", function(d,i){
+            return "width: 100%;";
+          });
 
          selectionB
             .transition()
-            .duration(1400)
+            .duration(800)
             .ease(d3.easePolyOut)
             .attr("style", function(d, i) {
-              return "height: " + totalHeight * d / self.dataMax + "px; width: 100%;";
+              return "height: " + 100 * d / self.dataMax + "%; width:" + barWidth + "%;";
             });
 
 
@@ -218,6 +297,16 @@ visualize data in a horizontal bar chart
         selection
             .exit()
             .remove();
+        // Ordinal Scale - X Axis
+        var xScale = d3.scaleBand() // modify from old version of d3: d3.scale.linear
+          .domain(self.data.map(function(d, i) { return i; }))
+          .range([0, totalWidth]);
+
+        var xAxis = d3.axisBottom()
+            .scale(xScale);
+
+        var axes = d3.select(".x.axis")
+          .call(xAxis);
 
       },
 
@@ -263,6 +352,7 @@ visualize data in a horizontal bar chart
 
       attached: function(){
         this.async(function(){
+          this.initRender();
           this.renderChart();
         });
       }
